@@ -1,41 +1,74 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# --- Logs ---
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# dependencies
-/node_modules
-/.pnp
+# --- Runtime data ---
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# --- Coverage ---
+lib-cov
+coverage
+*.lcov
+.nyc_output
+
+# --- Dependencies ---
+node_modules/
+jspm_packages/
+web_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+!.yarn/sdks
 
-# testing
-/coverage
+# --- Build outputs ---
+dist/
+build/
+.next/
+out/
+.nuxt/
+.vuepress/dist
+.cache/
 
-# next.js
-/.next/
-/out/
+# --- Environment variables (重要!) ---
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# production
-/build
+# --- Framework specific ---
+.vercel
+.serverless/
+.firebase/
+.dynamodb/
+.fusebox/
 
-# misc
+# --- IDE & Misc ---
 .DS_Store
 *.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+.vscode-test
+.idea/
+.vscode/
 *.tsbuildinfo
 next-env.d.ts
+
+# --- Cache ---
+.eslintcache
+.stylelintcache
+.npm
+.node_repl_history
+.parcel-cache
