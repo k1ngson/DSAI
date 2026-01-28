@@ -365,7 +365,7 @@ export default function DashboardClient() {
   };
 
   // --- Handlers ---
-  const openConversation = (id: string) => router.push(`/chat?c=${id}`);
+  const openConversation = (id: string) => router.push(`/chat?cid=${id}`);
 
   const renameConversation = (id: string, currentTitle: string | null) => {
     openRename({

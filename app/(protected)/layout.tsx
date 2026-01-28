@@ -82,8 +82,9 @@ function ProtectedLayoutInner({ children }: { children: React.ReactNode }) {
 
   const activeConversationId = useMemo(() => {
     if (pathname !== "/chat") return null;
-    return searchParams.get("c");
+    return searchParams.get("cid"); 
   }, [pathname, searchParams]);
+  
 
   // Auth Check Effect
   useEffect(() => {
@@ -170,7 +171,7 @@ function ProtectedLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   const handleNewChat = () => router.push("/chat");
-  const handleOpenConversation = (id: string) => router.push(`/chat?c=${id}`);
+  const handleOpenConversation = (id: string) => router.push(`/chat?cid=${id}`); // ✅ 改成 cid
 
   const handleRenameConversation = (e: React.MouseEvent, id: string, currentTitle: string | null) => {
     e.stopPropagation();
