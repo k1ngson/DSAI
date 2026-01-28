@@ -258,7 +258,7 @@ export default function ChatClient() {
   const isTmpConversationInUrl = isTmpCid(cidFromUrl);
   const isChatting = messages.length > 0;
   // 👇 修正變數遺失的問題
-  const isConversationMode = !!conversationId || isChatting;
+  const isConversationMode = (!!conversationId && !isTmpCid(conversationId)) || messages.length > 0;
   
   // auto-scroll
   const scrollToBottom = useCallback((smooth = true) => {
@@ -649,7 +649,7 @@ export default function ChatClient() {
       </header>
 
       <main className="flex-1 flex flex-col relative z-10 w-full overflow-hidden">
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto w-full custom-scrollbar relative">
+      <div ref={messagesContainerRef} className="flex-1 h-full w-full overflow-y-auto custom-scrollbar relative flex flex-col">
           {isConversationMode ? (
             loadingHistory || (!isChatting && !isTmpConversationInUrl) ? (
               <SkeletonBubbles />
