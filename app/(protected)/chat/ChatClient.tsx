@@ -435,11 +435,20 @@ async function saveUserMessageToDb(cid: string, text: string) {
     try {
       const realCid = await ensureRealConversation(conversationId, userText);
       await saveUserMessageToDb(realCid, newUserMsg.content);
+    
+      // 1. 在 handleSend 最前面，先取得 Token
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+        console.error("No access token found");
+        return;
+        }
 
       // Call API
       const response = await fetch("/api/proxy/stream-analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" , "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
           query: userText,
           deep_think: isDeepThink,
