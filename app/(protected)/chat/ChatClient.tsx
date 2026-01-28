@@ -437,7 +437,7 @@ async function saveUserMessageToDb(cid: string, text: string) {
       await saveUserMessageToDb(realCid, newUserMsg.content);
 
       // Call API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream-analyze`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream-analyze/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
