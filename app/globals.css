@@ -1,0 +1,24 @@
+/* app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  --color-deep-bg: #030303; /* 稍微提升一點點亮度，讓光影有對比度 */
+  --color-glass: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  /* 移除 overflow: hidden; 改由內層容器控制，否則光暈會被切斷 */
+  background: #fdfdfd; 
+}
+
+html.dark {
+  background: #000; /* 純黑底，讓底部光效更炸裂 */
+}
+
+/* 移除 nebula-bg 的實色，改用更輕量的處理，或者直接註釋掉 */
+.nebula-bg {
+  display: none; /* 暫時關閉，避免跟我們的新光效打架 */
+}

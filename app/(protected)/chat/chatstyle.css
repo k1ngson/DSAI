@@ -1,0 +1,122 @@
+/* styles/chatstyle.css */
+
+/* Fonts */
+.font-sans { font-family: 'Inter', sans-serif; }
+.font-mono { font-family: 'Fira Code', 'Consolas', monospace; }
+
+/* Scrollbar */
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.1) transparent; }
+.custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ========== Markdown Core ========== */
+.markdown-renderer {
+  color: #f1f1f1 !important;
+  line-height: 1.7 !important; /* Increased slightly for math spacing */
+  width: 100% !important;
+  overflow-wrap: break-word !important;
+}
+
+.markdown-renderer * { color: #f1f1f1 !important; }
+
+/* Headers */
+.markdown-renderer h1 { font-size: 1.75rem !important; font-weight: 700 !important; margin: 1rem 0 1.2rem 0 !important; }
+.markdown-renderer h2 { font-size: 1.4rem !important; font-weight: 600 !important; margin: 1rem 0 1rem 0 !important; color: #60a5fa !important; /* Light blue for sections */ }
+.markdown-renderer h3 { font-size: 1.2rem !important; font-weight: 600 !important; margin: 0.8rem 0 0.5rem 0 !important; }
+
+/* Text */
+.markdown-renderer p { margin: 0.5rem 0 !important; }
+
+/* Lists */
+.markdown-renderer ul, .markdown-renderer ol { margin: 0.5rem 0 0.5rem 1.2rem !important; padding-left: 0.5rem !important; }
+.markdown-renderer li { margin-bottom: 0.3rem !important; }
+
+/* ========== TABLE FIXES ========== */
+/* Wrapper for horizontal scroll on mobile */
+.table-container {
+  overflow-x: auto !important;
+  margin: 1.2rem 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.markdown-renderer table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.markdown-renderer th {
+  padding: 12px 16px !important;
+  font-weight: 600 !important;
+  text-align: left !important; /* Standard alignment */
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.markdown-renderer td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  text-align: left !important;
+}
+
+.markdown-renderer tr:last-child td { border-bottom: none !important; }
+
+/* ========== MATH SIZE FIXES ========== */
+
+/* Inline math: $x$ */
+.markdown-renderer .katex { 
+  font-size: 1.38em !important;      /* 小幅加大 */
+  line-height: 1.85 !important;
+}
+
+/* Display math container: $$...$$ */
+.markdown-renderer .katex-display { 
+  width: 100% !important;
+  text-align: center !important;     /* 強制置中 */
+  margin: 1rem 0 !important;
+  padding: 0.45rem 0.3rem !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: rgba(0, 0, 0, 0.18) !important;
+  border-radius: 8px !important;
+}
+
+/* Actual display equation size */
+.markdown-renderer .katex-display > .katex {
+  font-size: 1.40em !important;      /* 比你原本 1.25 明顯更易讀，但唔會太大 */
+  display: inline-block !important;  /* 配合置中 */
+  white-space: normal !important;
+  text-align: center !important;
+}
+
+/* Hard-center KaTeX display equations */
+.markdown-renderer .katex-display {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+/* Make inner KaTeX not stretch weirdly */
+.markdown-renderer .katex-display > .katex {
+  margin: 0 auto !important;
+}
+
+/* ========== Code Blocks ========== */
+.markdown-renderer pre {
+  background: #18181b !important; /* Zinc-900 */
+  padding: 1rem !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  margin: 1rem 0 !important;
+  overflow-x: auto !important;
+}
+
+.markdown-renderer code {
+  background: rgba(255, 255, 255, 0.1) !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 4px !important;
+  font-size: 0.9em !important;
+  font-family: 'Fira Code', monospace !important;
+}
