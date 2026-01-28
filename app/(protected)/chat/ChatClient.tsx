@@ -331,27 +331,47 @@ export default function ChatClient() {
   }, [cidFromUrl, router]);
 
   // DB Helpers
-  async function saveUserMessageToDb(cid: string, text: string) {
-    if (isTmpCid(cid)) return; // don't save tmp
+  // 找到這個函數
+async function saveUserMessageToDb(cid: string, text: string) {
+    if (isTmpCid(cid)) return;
+  
+    // 👇 新增這段：取得目前登入的使用者
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+  
+    if (!userId) {
+        console.error("User not logged in, cannot save message");
+        return;
+    }
+  
     const { error } = await supabase.from("messages").insert({
       conversation_id: cid,
       role: "user",
       content: text,
+      user_id: userId, // 👈 關鍵修正：必須帶入 user_id
     });
+    
     if (error) console.error("saveUserMessage error:", error);
   }
+  
 
   async function saveAssistantMessageToDb(cid: string, fullContent: string) {
-    if (isTmpCid(cid)) return; 
+    if (isTmpCid(cid)) return;
+    
+    // 👇 同樣加上取得 User ID
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+
     const { explanation, chartData } = unpack(fullContent);
     const { error } = await supabase.from("messages").insert({
       conversation_id: cid,
       role: "assistant",
       content: explanation,
       chart_data: chartData === "NONE" ? null : chartData,
+      user_id: userId, // 👈 加上這行 (如果 assistant 訊息也需要歸屬給使用者的話)
     });
     if (error) console.error("saveAssistantMessage error:", error);
-  }
+}
 
   async function setConversationTitle(cid: string, title: string) {
      const { error } = await supabase.from("conversations").update({ title }).eq("id", cid);
