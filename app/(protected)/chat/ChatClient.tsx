@@ -631,7 +631,7 @@ export default function ChatClient() {
   );
 
   return (
-    <div className="flex flex-col h-screen w-full bg-black text-zinc-100 font-sans selection:bg-indigo-500/30">
+    <div className="flex flex-col h-screen h-[100dvh] w-full bg-black text-zinc-100 font-sans selection:bg-indigo-500/30 overflow-hidden">
       <SimpleBackground />
 
       <header className="flex-shrink-0 h-16 flex items-center justify-end px-6 z-50 gap-2">
