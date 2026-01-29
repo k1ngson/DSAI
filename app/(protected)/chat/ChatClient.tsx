@@ -450,7 +450,7 @@ async function saveUserMessageToDb(cid: string, text: string) {
         method: "POST",
         headers: { "Content-Type": "application/json" , "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
-          query: userText,
+          user_query: userText,
           deep_think: isDeepThink,
           conversation_id: realCid, // Pass CID so backend knows context
           file_name: attachedFile ? attachedFile.name : undefined, 
