@@ -12,6 +12,7 @@ interface EChartsRendererProps {
   className?: string;
   savedId?: string; // 支援儲存狀態判斷
   initialTitle?: string;
+  animate?: boolean
 }
 
 export default function EChartsRenderer({
@@ -21,6 +22,7 @@ export default function EChartsRenderer({
   className = "",
   savedId = "",
   initialTitle = "",
+  animate = true,
 }: EChartsRendererProps) {
   const chartRef = useRef<any>(null); // 使用 any 比較方便呼叫 getEchartsInstance
   const [chartType, setChartType] = useState<"line" | "bar" | "scatter">("line");
