@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 interface AnalyzeRequest {
   user_query: string;
   context_text?: string;
-  file?: File; // 如果有上傳檔案
+  file?: File;
   need_reasoning?: boolean;
 }
 
@@ -19,19 +19,29 @@ interface AnalyzeResponse {
 }
 
 // 追加到原 api.ts 文件中
-export const streamAnalyzeData = async (payload: AnalyzeRequest & { conversation_id: string }) => {
+export const streamAnalyzeData = async (
+  payload: AnalyzeRequest & { conversation_id: string }
+) => {
+  // 前端前置校验：拦截空值，避免无效请求
+  if (!payload.user_query?.trim()) {
+    throw new Error('用户提问内容不能为空');
+  }
+  if (!payload.conversation_id?.trim()) {
+    throw new Error('会话ID不能为空');
+  }
+
   try {
     const formData = new FormData();
-    // 拼接所有Form参数，匹配后端Form字段名
+    // 拼接必填参数
     formData.append('user_query', payload.user_query);
     formData.append('conversation_id', payload.conversation_id);
-    formData.append('need_reasoning', payload.need_reasoning?.toString() || 'false');
     
-    // 可选参数
+    // 拼接可选参数
+    formData.append('need_reasoning', payload.need_reasoning?.toString() || 'false');
     if (payload.context_text) {
       formData.append('context_text', payload.context_text);
     }
-    // 上传文件
+    // 拼接文件
     if (payload.file) {
       formData.append('file', payload.file);
     }
@@ -40,24 +50,13 @@ export const streamAnalyzeData = async (payload: AnalyzeRequest & { conversation
       `${API_BASE_URL}/stream-analyze`,
       formData,
       {
-        headers: {},
-        // 流式响应配置
+        // 关键：不手动指定 Content-Type，让 axios 自动生成带 boundary 的请求头
         responseType: 'text',
-        onDownloadProgress: (progressEvent) => {
-          // 可在此处理前端流式渲染逻辑
-        }
       }
     );
-
     return response.data;
   } catch (error: any) {
-    // 异常日志与原逻辑一致
-    if (error.response) {
-      console.error('流式API错误响应:', error.response.data);
-      console.error('状态码:', error.response.status);
-    } else {
-      console.error('网络连接失败:', error.message);
-    }
-    throw new Error(error.response?.data?.detail || '无法连接到后端服务器');
+    console.error('流式接口请求失败：', error.response?.data || error.message);
+    throw new Error('请求服务器失败，请稍后重试');
   }
 };
