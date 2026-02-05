@@ -435,27 +435,31 @@ async function saveUserMessageToDb(cid: string, text: string) {
     try {
       const realCid = await ensureRealConversation(conversationId, userText);
       await saveUserMessageToDb(realCid, newUserMsg.content);
-    
-      // 1. 在 handleSend 最前面，先取得 Token
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-
-        if (!token) {
-        console.error("No access token found");
-        return;
-        }
-
-      // Call API
+  
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+  
+      if (!token) return;
+  
+      // ✅ 修复方案：使用 FormData 代替 JSON
+      const formData = new FormData();
+      formData.append("user_query", userText);
+      formData.append("conversation_id", realCid);
+      // 即使是布尔值，在 FormData 中也会转为字符串，FastAPI 会自动处理
+      formData.append("need_reasoning", isDeepThink.toString()); 
+      
+      // 如果有文件，这样添加
+      if (attachedFile) {
+        formData.append("file", attachedFile);
+      }
+  
       const response = await fetch("/api/proxy/stream-analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" , "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({
-          user_query: userText,
-          deep_think: isDeepThink,
-          conversation_id: realCid, // Pass CID so backend knows context
-          file_name: attachedFile ? attachedFile.name : undefined, 
-          // Note: Real file upload logic would go here or be handled separately
-        }),
+        headers: { 
+          // ⚠️ 重要：删掉 "Content-Type": "application/json"
+          "Authorization": `Bearer ${token}` 
+        },
+        body: formData, // 直接发送 formData 对象
       });
 
       if (!response.body) throw new Error("No response body");
