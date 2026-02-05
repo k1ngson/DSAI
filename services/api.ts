@@ -18,46 +18,46 @@ interface AnalyzeResponse {
   };
 }
 
-export const analyzeData = async (payload: AnalyzeRequest): Promise<AnalyzeResponse> => {
+// 追加到原 api.ts 文件中
+export const streamAnalyzeData = async (payload: AnalyzeRequest & { conversation_id: string }) => {
   try {
-    // 關鍵修正：建立 FormData 物件
     const formData = new FormData();
-    
-    // 根據後端 main.py 的參數名稱進行 append
+    // 拼接所有Form参数，匹配后端Form字段名
     formData.append('user_query', payload.user_query);
+    formData.append('conversation_id', payload.conversation_id);
+    formData.append('need_reasoning', payload.need_reasoning?.toString() || 'false');
     
-    // 如果有檔案，放入 'file' 欄位 (對應後端的 file: UploadFile)
+    // 可选参数
+    if (payload.context_text) {
+      formData.append('context_text', payload.context_text);
+    }
+    // 上传文件
     if (payload.file) {
       formData.append('file', payload.file);
     }
 
-    // 注意：如果你的後端還需要 context_text，也必須用 append
-    if (payload.context_text) {
-        // 如果後端沒定義這個 Form 欄位，請確認後端是否需要接收它
-        formData.append('context_text', payload.context_text);
-    }
-
-    const response = await axios.post<AnalyzeResponse>(
-      `${API_BASE_URL}/analyze`, 
-      formData, // 發送 formData
+    const response = await axios.post(
+      `${API_BASE_URL}/stream-analyze`,
+      formData,
       {
-        headers: {
-          // Axios 會自動根據 formData 設定正確的 Content-Type (包含 boundary)
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: {},
+        // 流式响应配置
+        responseType: 'text',
+        onDownloadProgress: (progressEvent) => {
+          // 可在此处理前端流式渲染逻辑
+        }
       }
     );
 
     return response.data;
   } catch (error: any) {
-    // 更加詳細的 Log，幫助你看到真正的錯誤原因
+    // 异常日志与原逻辑一致
     if (error.response) {
-      console.error('API 錯誤回應:', error.response.data);
-      console.error('狀態碼:', error.response.status);
+      console.error('流式API错误响应:', error.response.data);
+      console.error('状态码:', error.response.status);
     } else {
-      console.error('網路連線失敗:', error.message);
+      console.error('网络连接失败:', error.message);
     }
-    
-    throw new Error(error.response?.data?.detail || '無法連接到後端伺服器');
+    throw new Error(error.response?.data?.detail || '无法连接到后端服务器');
   }
 };
