@@ -47,15 +47,23 @@ export default function SettingsClient() {
         const realRole = profile?.role || "student";
         setRole(realRole);
 
-        // 2. Fetch Token Usage
-        const today = new Date().toISOString().split('T')[0];
-        const { data: usageData } = await supabase
+        // 2. 獲取「本地」日期 (YYYY-MM-DD)，避免 UTC 時區偏差
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000; 
+        const localDate = new Date(now.getTime() - offset).toISOString().split('T')[0];
+
+        // 3. Fetch Token Usage (使用 maybeSingle 避免 406 錯誤)
+        const { data: usageData, error: usageError } = await supabase
           .from('daily_token_usage')
           .select('used_tokens')
           .eq('user_id', user.id)
-          .eq('date', today)
-          .single();
+          .eq('date', localDate)
+          .maybeSingle(); 
         
+        if (usageError) {
+          console.error("Token Fetch Error:", usageError);
+        }
+
         const limit = TOKEN_LIMITS[realRole as keyof typeof TOKEN_LIMITS] || 12000;
         
         setTokenUsage({
