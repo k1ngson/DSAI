@@ -1,18 +1,24 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
-import { BarChart3, LineChart, ScatterChart, Download, LayoutDashboard, Check, Loader2 } from "lucide-react";
-import { supabase } from "../src/utils/supabaseClient"; // 確保路徑正確
+import { 
+  BarChart3, LineChart, ScatterChart, Download, 
+  LayoutDashboard, Check, Loader2, Palette 
+} from "lucide-react";
+import { supabase } from "../src/utils/supabaseClient";
+
+// Define background types
+type BgTheme = "dark" | "white" | "black" | "transparent";
 
 interface EChartsRendererProps {
   optionJson: string | object;
   height?: number;
   width?: string;
   className?: string;
-  savedId?: string; // 支援儲存狀態判斷
+  savedId?: string;
   initialTitle?: string;
-  animate?: boolean
+  animate?: boolean;
 }
 
 export default function EChartsRenderer({
@@ -24,27 +30,31 @@ export default function EChartsRenderer({
   initialTitle = "",
   animate = true,
 }: EChartsRendererProps) {
-  const chartRef = useRef<any>(null); // 使用 any 比較方便呼叫 getEchartsInstance
-  const [chartType, setChartType] = useState<"line" | "bar" | "scatter">("line");
-  const [baseOption, setBaseOption] = useState<any>(null);
-  const [parsedOption, setParsedOption] = useState<any>(null);
+  const chartRef = useRef<any>(null);
   
-  // 儲存相關狀態
+  // State
+  const [chartType, setChartType] = useState<"line" | "bar" | "scatter">("line");
+  const [bgTheme, setBgTheme] = useState<BgTheme>("dark"); // Default theme
+  const [baseOption, setBaseOption] = useState<any>(null);
+  
+  // Saving State
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [hasSaved, setHasSaved] = useState(!!savedId);
   const [chartTitle, setChartTitle] = useState(initialTitle || "My Chart");
 
+  // Sync saved state
   useEffect(() => {
     setHasSaved(!!savedId);
   }, [savedId]);
 
-  // 1. 解析傳入的 JSON
+  // 1. Parse Input JSON
   useEffect(() => {
     try {
       if (!optionJson || optionJson === "NONE") return;
       const opt = typeof optionJson === "string" ? JSON.parse(optionJson) : optionJson;
       
+      // Auto-detect initial type
       const firstSeries = Array.isArray(opt.series) ? opt.series[0] : opt.series;
       if (firstSeries && firstSeries.type) {
         setChartType(firstSeries.type);
@@ -57,13 +67,14 @@ export default function EChartsRenderer({
     }
   }, [optionJson]);
 
-  // 2. 根據 chartType 產生新的 Option
-  useEffect(() => {
-    if (!baseOption) return;
+  // 2. Generate Final Option (Memoized for performance)
+  // Handles: Chart Type changes + Background Theme Text Color changes
+  const finalOption = useMemo(() => {
+    if (!baseOption) return null;
 
     const newOpt = JSON.parse(JSON.stringify(baseOption)); // Deep clone
 
-    // --- Series Type Update ---
+    // --- A. Handle Series Type ---
     if (Array.isArray(newOpt.series)) {
       newOpt.series = newOpt.series.map((s: any) => ({
         ...s,
@@ -73,7 +84,7 @@ export default function EChartsRenderer({
       }));
     }
 
-    // --- Dynamic Title Update ---
+    // --- B. Handle Dynamic Title ---
     if (newOpt.title && newOpt.title.text) {
       const oldTitle = newOpt.title.text;
       let typeText = "Chart";
@@ -82,46 +93,80 @@ export default function EChartsRenderer({
       if (chartType === "scatter") typeText = "Scatter Plot";
 
       const regex = /\((Line|Bar|Scatter|Histogram) (Plot|Chart)\)/i;
-      
       if (regex.test(oldTitle)) {
         newOpt.title.text = oldTitle.replace(regex, `(${typeText})`);
-      } else {
-        // 避免重複添加
-        if (!oldTitle.includes(`(${typeText})`)) {
-             newOpt.title.text = `${oldTitle} (${typeText})`;
-        }
+      } else if (!oldTitle.includes(`(${typeText})`)) {
+        newOpt.title.text = `${oldTitle} (${typeText})`;
       }
-      setChartTitle(newOpt.title.text);
+      setChartTitle(newOpt.title.text); // Sync title state
     }
 
-    // --- Layout Adjustment ---
-    if (!newOpt.title) newOpt.title = {};
-    newOpt.title.top = 5;
-    newOpt.title.left = "center";
+    // --- C. Handle Styling based on BgTheme ---
+    // Define colors
+    const isLightMode = bgTheme === "white";
+    const textColor = isLightMode ? "#333333" : "#e4e4e7"; // Dark gray vs Light gray
+    const axisColor = isLightMode ? "#666666" : "#a1a1aa";
+    const splitLineColor = isLightMode ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)";
 
+    // Apply global text style
+    newOpt.textStyle = { ...newOpt.textStyle, color: textColor };
+    newOpt.backgroundColor = "transparent"; // We handle background via CSS on container
+
+    // Apply Title Color
+    if (newOpt.title) {
+        newOpt.title.textStyle = { ...newOpt.title.textStyle, color: textColor };
+        newOpt.title.subtextStyle = { ...newOpt.title.subtextStyle, color: axisColor };
+    }
+
+    // Apply Legend Color
+    if (newOpt.legend) {
+        newOpt.legend.textStyle = { ...newOpt.legend.textStyle, color: textColor };
+    }
+
+    // Apply Axis Colors
+    const updateAxis = (axis: any) => {
+        if (!axis) return axis;
+        return {
+            ...axis,
+            axisLabel: { ...axis.axisLabel, color: axisColor },
+            nameTextStyle: { ...axis.nameTextStyle, color: textColor },
+            splitLine: { ...axis.splitLine, lineStyle: { color: splitLineColor } },
+            axisLine: { ...axis.axisLine, lineStyle: { color: axisColor } }
+        };
+    };
+
+    if (newOpt.xAxis) newOpt.xAxis = Array.isArray(newOpt.xAxis) ? newOpt.xAxis.map(updateAxis) : updateAxis(newOpt.xAxis);
+    if (newOpt.yAxis) newOpt.yAxis = Array.isArray(newOpt.yAxis) ? newOpt.yAxis.map(updateAxis) : updateAxis(newOpt.yAxis);
+
+    // --- D. Layout Fixes ---
     if (!newOpt.grid) newOpt.grid = {};
-    newOpt.grid.top = 60;
-    newOpt.grid.bottom = 40;
-    newOpt.grid.left = "5%";
-    newOpt.grid.right = "5%";
-    newOpt.grid.containLabel = true;
+    newOpt.grid = { ...newOpt.grid, top: 60, bottom: 40, containLabel: true };
 
-    // --- Styling ---
-    newOpt.backgroundColor = "transparent";
-    if (!newOpt.textStyle) newOpt.textStyle = {};
-    newOpt.textStyle.color = "#a1a1aa"; 
-
-    setParsedOption(newOpt);
-  }, [baseOption, chartType]);
+    return newOpt;
+  }, [baseOption, chartType, bgTheme]);
 
   // --- Actions ---
+  
+  const cycleBg = () => {
+    const themes: BgTheme[] = ["dark", "white", "black", "transparent"];
+    const nextIndex = (themes.indexOf(bgTheme) + 1) % themes.length;
+    setBgTheme(themes[nextIndex]);
+  };
+
   const handleDownload = () => {
     if (!chartRef.current) return;
     const instance = chartRef.current.getEchartsInstance();
+    
+    // Determine background color for the downloaded image
+    let dlBg = "#18181b"; // Default dark
+    if (bgTheme === "white") dlBg = "#ffffff";
+    if (bgTheme === "black") dlBg = "#000000";
+    if (bgTheme === "transparent") dlBg = "transparent";
+
     const base64 = instance.getDataURL({
       type: "png",
       pixelRatio: 2,
-      backgroundColor: "#18181b", // Dark background
+      backgroundColor: dlBg,
     });
     const a = document.createElement("a");
     a.href = base64;
@@ -140,7 +185,7 @@ export default function EChartsRenderer({
         return;
       }
 
-      // 注意：這裡假設你的後端 API 路徑是 /api/proxy/api/charts/save
+      // Using your existing proxy path
       const response = await fetch(`/api/proxy/api/charts/save`, {
         method: "POST",
         headers: {
@@ -149,7 +194,7 @@ export default function EChartsRenderer({
         },
         body: JSON.stringify({
           title: chartTitle,
-          chart_config: parsedOption
+          chart_config: finalOption // Save the current state (including colors)
         })
       });
 
@@ -167,26 +212,47 @@ export default function EChartsRenderer({
     }
   };
 
-  if (!parsedOption) return null;
+  // Background CSS mapping
+  const bgStyles: Record<BgTheme, string> = {
+    dark: "bg-zinc-900 border-zinc-700",
+    white: "bg-white border-zinc-200 shadow-sm",
+    black: "bg-black border-zinc-800",
+    transparent: "bg-transparent border-dashed border-zinc-700/50",
+  };
+
+  if (!finalOption) return null;
 
   return (
-    <div className={`w-full flex flex-col items-center group relative ${className}`}>
-      {/* 切換按鈕與工具列 (Hover 顯示) */}
-      <div className="absolute top-2 right-2 z-10 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900/80 backdrop-blur p-1.5 rounded-lg border border-white/10">
+    <div className={`w-full flex flex-col items-center group relative border rounded-xl transition-colors duration-300 ${bgStyles[bgTheme]} ${className}`}>
+      
+      {/* Toolbar */}
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800/90 backdrop-blur p-1.5 rounded-lg border border-white/10 shadow-xl">
         
-        {/* 圖表類型切換 */}
-        <div className="flex gap-1 border-r border-white/10 pr-2 mr-2">
-          <button onClick={() => setChartType("bar")} className={`p-1 rounded ${chartType === 'bar' ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white'}`}><BarChart3 size={14} /></button>
+        {/* Theme Toggle */}
+        <button 
+            onClick={cycleBg}
+            className="p-1 text-zinc-400 hover:text-white flex items-center gap-1"
+            title={`Theme: ${bgTheme.toUpperCase()}`}
+        >
+            <Palette size={14} />
+            <span className="text-[10px] uppercase font-mono hidden sm:inline">{bgTheme}</span>
+        </button>
+
+        <div className="w-[1px] h-3 bg-zinc-600 mx-1" />
+
+        {/* Chart Type Toggle */}
+        <div className="flex gap-1 border-r border-zinc-600 pr-2 mr-2">
           <button onClick={() => setChartType("line")} className={`p-1 rounded ${chartType === 'line' ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white'}`}><LineChart size={14} /></button>
+          <button onClick={() => setChartType("bar")} className={`p-1 rounded ${chartType === 'bar' ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white'}`}><BarChart3 size={14} /></button>
           <button onClick={() => setChartType("scatter")} className={`p-1 rounded ${chartType === 'scatter' ? 'bg-indigo-500 text-white' : 'text-zinc-400 hover:text-white'}`}><ScatterChart size={14} /></button>
         </div>
 
-        {/* 下載 */}
+        {/* Download */}
         <button onClick={handleDownload} className="p-1 text-zinc-400 hover:text-white" title="Download PNG">
           <Download size={14} />
         </button>
 
-        {/* 儲存 */}
+        {/* Save */}
         {!hasSaved && (
              <button 
                 onClick={handleSaveToDashboard} 
@@ -199,13 +265,14 @@ export default function EChartsRenderer({
         )}
       </div>
 
-      {/* 圖表本體 */}
+      {/* Chart Instance */}
       <ReactECharts
         ref={chartRef}
-        option={parsedOption}
+        option={finalOption}
         style={{ height, width }}
-        className="w-full"
-        theme="dark" // 如果你的 ECharts 有註冊 dark theme
+        className="w-full rounded-xl overflow-hidden"
+        notMerge={true} // Crucial for clean theme transitions
+        lazyUpdate={true}
         opts={{ renderer: "canvas" }}
       />
     </div>
