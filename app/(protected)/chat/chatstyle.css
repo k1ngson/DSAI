@@ -74,6 +74,7 @@
 
 /* Display math container: $$...$$ */
 .markdown-renderer .katex-display { 
+  display: block !important; /* 改回 block，因為 KaTeX 默認就是塊級 */
   width: 100% !important;
   text-align: center !important;     /* 強制置中 */
   margin: 1rem 0 !important;
@@ -81,14 +82,13 @@
   overflow-x: auto !important;
   overflow-y: hidden !important;
   background: rgba(0, 0, 0, 0.18) !important;
-  border-radius: 8px !important;
 }
 
 /* Actual display equation size */
 .markdown-renderer .katex-display > .katex {
   font-size: 1.40em !important;      /* 比你原本 1.25 明顯更易讀，但唔會太大 */
   display: inline-block !important;  /* 配合置中 */
-  white-space: normal !important;
+  white-space: nowrap !important;
   text-align: center !important;
 }
 

@@ -1,8 +1,8 @@
 // components/SimpleMarkdownRenderer.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
-import remarkGfm from 'remark-gfm'; // <--- CRITICAL FIX FOR TABLES
+import remarkGfm from 'remark-gfm'; 
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
@@ -11,36 +11,39 @@ interface SimpleMarkdownRendererProps {
 }
 
 const SimpleMarkdownRenderer: React.FC<SimpleMarkdownRendererProps> = ({ content }) => {
+  // 核心修復：預處理 content，將 \[ \] 替換為 $$ $$，否則 remark-math 可能無法識別為 displayMode
+  const processedContent = useMemo(() => {
+    if (!content) return "";
+    return content
+      .replace(/\\\[/g, '$$$')
+      .replace(/\\\]/g, '$$$')
+      .replace(/\\\(/g, '$')
+      .replace(/\\\)/g, '$');
+  }, [content]);
+
   return (
-    <div className="markdown-renderer">
+    <div className="markdown-renderer w-full overflow-x-hidden">
       <ReactMarkdown
-        // remarkGfm must be included here to parse tables
         remarkPlugins={[remarkGfm, remarkMath]} 
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: false }]]}
         components={{
-          h1: ({ children }) => <h1>{children}</h1>,
-          h2: ({ children }) => <h2>{children}</h2>,
-          h3: ({ children }) => <h3>{children}</h3>,
-          p: ({ children }) => <p>{children}</p>,
-          ul: ({ children }) => <ul>{children}</ul>,
-          ol: ({ children }) => <ol>{children}</ol>,
-          li: ({ children }) => <li>{children}</li>,
-          // Table rendering logic
+          // 讓 Table 支持橫向滾動，避免在手機端撐開容器
           table: ({ children }) => (
-            <div className="table-container">
-              <table>{children}</table>
+            <div className="table-container my-4 overflow-x-auto border border-zinc-700 rounded-lg">
+              <table className="min-w-full divide-y divide-zinc-700">{children}</table>
             </div>
           ),
-          thead: ({ children }) => <thead>{children}</thead>,
-          tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr>{children}</tr>,
-          th: ({ children }) => <th>{children}</th>,
-          td: ({ children }) => <td>{children}</td>,
-          code: ({ children, className }) => <code className={className}>{children}</code>,
-          pre: ({ children }) => <pre>{children}</pre>,
+          // 優化代碼塊
+          code: ({ children, className, inline }: any) => {
+            return inline ? (
+              <code className="bg-zinc-800 px-1 py-0.5 rounded text-sm">{children}</code>
+            ) : (
+              <code className={className}>{children}</code>
+            );
+          },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
