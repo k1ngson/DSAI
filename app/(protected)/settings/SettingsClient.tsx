@@ -8,8 +8,8 @@ import { supabase } from "../../../src/utils/supabaseClient";
 type Theme = "dark" | "light";
 
 const TOKEN_LIMITS = {
-  student: 20000,
-  teacher: 40000,
+  student: 40000,
+  teacher: 100000,
   admin: 150000
 };
 
